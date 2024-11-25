@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Auto Poster</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .tiktok-theme {
+            background: linear-gradient(90deg, #00f2ea, #ff0050);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold tiktok-theme">TikTok Auto Poster</h1>
+                <div id="userSection" class="hidden">
+                    <span id="username" class="mr-4"></span>
+                    <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Logout</button>
+                </div>
+                <button id="loginBtn" onclick="login()" class="bg-black text-white px-6 py-2 rounded-lg">Login with TikTok</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto mt-10 px-4">
+        <div id="uploadSection" class="hidden bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-6">Upload Video</h2>
+            <form id="uploadForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Video File</label>
+                    <input type="file" accept="video/*" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Caption</label>
+                    <textarea required
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                              rows="3"
+                              placeholder="Enter your video caption..."></textarea>
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-600">Disable Comments</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-600">Disable Duet</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-600">Disable Stitch</span>
+                    </label>
+                </div>
+                <button type="submit" 
+                        class="w-full bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    Upload to TikTok
+                </button>
+            </form>
+        </div>
+
+        <div id="loginMessage" class="text-center py-10">
+            <h2 class="text-2xl font-semibold mb-4">Welcome to TikTok Auto Poster</h2>
+            <p class="text-gray-600 mb-6">Login with your TikTok account to start posting videos automatically.</p>
+            <button onclick="login()" class="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition-colors">
+                Login with TikTok
+            </button>
+        </div>
+    </main>
+
+    <footer class="mt-20 py-6 bg-white">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <div class="space-x-4">
+                <a href="/privacy-policy.html" class="text-gray-600 hover:text-gray-900">Privacy Policy</a>
+                <a href="https://github.com/yourusername/tiktok-auto-poster" class="text-gray-600 hover:text-gray-900">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const TIKTOK_APP_CONFIG = {
+            CLIENT_KEY: 'your_client_key',
+            REDIRECT_URI: 'your_redirect_uri',
+            AUTH_SCOPE: 'user.info.basic,video.upload,video.publish'
+        };
+
+        function login() {
+            const authUrl = `https://www.tiktok.com/auth/authorize/?client_key=${TIKTOK_APP_CONFIG.CLIENT_KEY}&scope=${TIKTOK_APP_CONFIG.AUTH_SCOPE}&response_type=code&redirect_uri=${TIKTOK_APP_CONFIG.REDIRECT_URI}`;
+            window.location.href = authUrl;
+        }
+
+        function logout() {
+            // Clear local storage
+            localStorage.removeItem('tiktok_access_token');
+            localStorage.removeItem('tiktok_user');
+            
+            // Update UI
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('loginBtn').classList.remove('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('loginMessage').classList.remove('hidden');
+        }
+
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const videoFile = form.querySelector('input[type="file"]').files[0];
+            const caption = form.querySelector('textarea').value;
+            const disableComments = form.querySelector('input[type="checkbox"]:nth-of-type(1)').checked;
+            const disableDuet = form.querySelector('input[type="checkbox"]:nth-of-type(2)').checked;
+            const disableStitch = form.querySelector('input[type="checkbox"]:nth-of-type(3)').checked;
+
+            try {
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Uploading...';
+
+                await uploadVideo(videoFile, caption, {
+                    disableComments,
+                    disableDuet,
+                    disableStitch
+                });
+
+                alert('Video uploaded successfully!');
+                form.reset();
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Error uploading video. Please try again.');
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload to TikTok';
+            }
+        });
+
+        // Check authentication status on page load
+        window.addEventListener('load', () => {
+            const accessToken = localStorage.getItem('tiktok_access_token');
+            if (accessToken) {
+                document.getElementById('userSection').classList.remove('hidden');
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('uploadSection').classList.remove('hidden');
+                document.getElementById('loginMessage').classList.add('hidden');
+
+                const user = JSON.parse(localStorage.getItem('tiktok_user'));
+                if (user) {
+                    document.getElementById('username').textContent = user.display_name;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
